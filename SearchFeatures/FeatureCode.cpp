@@ -25,10 +25,12 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
         {
             //删掉头部通配符
             index = markCode.find("??", index);
-            if (index == 0) {
+            if (index == 0)
+            {
                 markCode.erase(index, 2);
             }
-            else {
+            else 
+            {
                 break;
             }
         }
@@ -47,13 +49,19 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
     //将特征码转换成byte型
     BYTE *pMarkCode = new BYTE[len];
     BYTE *pWildcard = new BYTE[len];
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) 
+    {
         string tempStr = markCode.substr(i * 2, 2);
-        if (tempStr == "??") {
+        if (tempStr == "??")
+        {
             pWildcard[i] = 0xFF;
-            if (nSundayLen == len) nSundayLen = i;	//记录第一个通配符的索引，该索引越靠后，效率越高
+            if (nSundayLen == len)
+            {
+                nSundayLen = i;	//记录第一个通配符的索引，该索引越靠后，效率越高
+            }
         }
-        else {
+        else 
+        {
             pWildcard[i] = 0x00;
         }
         pMarkCode[i] = strtoul(tempStr.c_str(), 0, 16);
@@ -62,7 +70,8 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
 
     //Sunday算法模板数组赋值，+1防止特征码出现FF时越界
     int aSunday[0xFF + 1] = { 0 };
-    for (int i = 0; i < nSundayLen; i++) {
+    for (int i = 0; i < nSundayLen; i++) 
+    {
         aSunday[pMarkCode[i]] = i + 1;
     }
 
@@ -76,8 +85,10 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
     BYTE *pMemBuffer = NULL;
     //计算参数retAddr[]数组的长度，该参数传入前一定要清0
     int nArrayLength = 0;
-    for (int i = 0;; i++) {
-        if (*(retAddr + i) != 0) {
+    for (int i = 0;; i++)
+    {
+        if (*(retAddr + i) != 0) 
+        {
             nArrayLength = i;
             break;
         }
@@ -85,18 +96,20 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
     //偏移量
     int nOffset;
     //数组下标：内存、特征码、返回地址
-    int i = 0, j = 0, nCount = 0;
+    int i = 0;
+    int j = 0;
+    int nCount = 0;
 
     //内存信息
     MEMORY_BASIC_INFORMATION mbi;
-
 
     //扫描内存
     while (dwCurAddr < dwEndAddr)
     {
         //查询地址空间中内存地址的信息
         memset(&mbi, 0, sizeof(MEMORY_BASIC_INFORMATION));
-        if (::VirtualQueryEx(hProcess, (LPCVOID)dwCurAddr, &mbi, sizeof(mbi)) == 0) {
+        if (::VirtualQueryEx(hProcess, (LPCVOID)dwCurAddr, &mbi, sizeof(mbi)) == 0)
+        {
             goto end;
         }
 
@@ -115,7 +128,8 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
             PAGE_EXECUTE_READWRITE == mbi.Protect)	//读写及执行
         {
             //申请动态内存
-            if (pMemBuffer) {
+            if (pMemBuffer)
+            {
                 delete[] pMemBuffer;
                 pMemBuffer = NULL;
             }
@@ -158,7 +172,8 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
                 //目标地址 = 特征码地址 + 偏移距离
                 //CALL（E8）跳转的地址 = E8指令后面的4个字节地址 + 下一条指令地址(也就是目标地址 + 5)
                 retAddr[nCount] = dwCurAddr + i - len + deviation;
-                if (isCall) {
+                if (isCall) 
+                {
                     DWORD temp;
                     memcpy(&temp, &pMemBuffer[i - len + deviation + 1], 4);
                     retAddr[nCount] += 5;
@@ -171,12 +186,14 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
                     goto end;
                 }
 
-                if (isAll) {
+                if (isAll)
+                {
                     i = i - len + 1;
                     j = 0;
                     goto nextAddr;
                 }
-                else {
+                else
+                {
                     goto end;
                 }
             }
@@ -191,7 +208,8 @@ DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memB
 
 end:
     //释放内存
-    if (pMemBuffer) {
+    if (pMemBuffer)
+    {
         delete[] pMemBuffer;
         pMemBuffer = NULL;
     }
