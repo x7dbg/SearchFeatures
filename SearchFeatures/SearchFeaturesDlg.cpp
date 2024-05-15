@@ -118,7 +118,7 @@ BOOL CSearchFeaturesDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
     GetAllProcess();
-
+    CheckDlgButton(IDC_RADIO_BASEADDR, BST_CHECKED);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
