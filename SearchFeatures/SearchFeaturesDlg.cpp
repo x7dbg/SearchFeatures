@@ -78,6 +78,7 @@ void CSearchFeaturesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_EDIT_MARKCODELIST, m_strMarkCodeList);
     DDX_Radio(pDX, IDC_RADIO_BASEADDR, m_btnType);
     DDX_Control(pDX, IDC_LIST_RESULT, m_listResult);
+    DDX_Control(pDX, IDC_COMBO_LANGUAGE, m_comboBoxLanguage);
 }
 
 BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
@@ -133,7 +134,10 @@ BOOL CSearchFeaturesDlg::OnInitDialog()
     m_listResult.InsertColumn(1, _T("结  果"), LVCFMT_LEFT, 100);
     m_listResult.InsertColumn(2, _T("注  释"), LVCFMT_LEFT, 110);
    
-
+    m_comboBoxLanguage.InsertString(-1,_T("C++"));
+    m_comboBoxLanguage.InsertString(-1, _T("易语言"));
+    
+    m_comboBoxLanguage.SetCurSel(0);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 

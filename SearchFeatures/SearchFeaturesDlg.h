@@ -101,6 +101,10 @@ private:
     
     // 表明用户搜索类型，0==基址 1==call 2==偏移
     int m_btnType;
+    
     // 显示特征码搜索结果
     CListCtrl m_listResult;
+
+    // 表明要生成什么语言的代码
+    CComboBox m_comboBoxLanguage;
 };
