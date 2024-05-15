@@ -5,6 +5,7 @@
 #pragma once
 #include "afxwin.h"
 #include "FeatureCode.h"
+#include "afxcmn.h"
 
 
 // CSearchFeaturesDlg 对话框
@@ -90,4 +91,6 @@ private:
     
     // 表明用户搜索类型，0==基址 1==call 2==偏移
     int m_btnType;
+    // 显示特征码搜索结果
+    CListCtrl m_listResult;
 };

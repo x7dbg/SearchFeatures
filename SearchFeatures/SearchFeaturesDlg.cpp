@@ -77,6 +77,7 @@ void CSearchFeaturesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_EDIT_ENDADDR, m_dwEndAddr);
     DDX_Text(pDX, IDC_EDIT_MARKCODELIST, m_strMarkCodeList);
     DDX_Radio(pDX, IDC_RADIO_BASEADDR, m_btnType);
+    DDX_Control(pDX, IDC_LIST_RESULT, m_listResult);
 }
 
 BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
@@ -124,6 +125,15 @@ BOOL CSearchFeaturesDlg::OnInitDialog()
 
     GetAllProcess();
     CheckDlgButton(IDC_RADIO_BASEADDR, BST_CHECKED);
+
+    DWORD dwStyle = m_listResult.GetExtendedStyle();
+    dwStyle |= LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES | LVS_EX_INFOTIP | LVS_EX_DOUBLEBUFFER;
+    m_listResult.SetExtendedStyle(dwStyle);
+    m_listResult.InsertColumn(0, _T("名称"), LVCFMT_LEFT, 110);
+    m_listResult.InsertColumn(1, _T("结果"), LVCFMT_LEFT, 100);
+    m_listResult.InsertColumn(2, _T("注释"), LVCFMT_LEFT, 110);
+   
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
