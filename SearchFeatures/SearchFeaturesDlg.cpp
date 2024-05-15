@@ -6,8 +6,8 @@
 #include "SearchFeatures.h"
 #include "SearchFeaturesDlg.h"
 #include "afxdialogex.h"
-#include "FeatureCode.h"
 #include <tlhelp32.h>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -51,6 +51,13 @@ END_MESSAGE_MAP()
 CSearchFeaturesDlg::CSearchFeaturesDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSearchFeaturesDlg::IDD, pParent)
     , m_hProcess(INVALID_HANDLE_VALUE)
+    , m_strName(_T(""))
+    , m_strNotes(_T(""))
+    , m_strMarkCode(_T(""))
+    , m_nOffset(0)
+    , m_uLen(0)
+    , m_dwBeginAddr(_T("0x00401000"))
+    , m_dwEndAddr(_T("0x07FFFFFF"))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -59,6 +66,13 @@ void CSearchFeaturesDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_COMBO_PROCESSLIST, m_comboProcessList);
+    DDX_Text(pDX, IDC_EDIT_NAME, m_strName);
+    DDX_Text(pDX, IDC_EDIT_NOTES, m_strNotes);
+    DDX_Text(pDX, IDC_EDIT_MARKCODE, m_strMarkCode);
+    DDX_Text(pDX, IDC_EDIT_OFFSET, m_nOffset);
+    DDX_Text(pDX, IDC_EDIT_LENGTH, m_uLen);
+    DDX_Text(pDX, IDC_EDIT_BEGINADDR, m_dwBeginAddr);
+    DDX_Text(pDX, IDC_EDIT_ENDADDR, m_dwEndAddr);
 }
 
 BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
@@ -68,6 +82,7 @@ BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
     ON_BN_CLICKED(IDOK, &CSearchFeaturesDlg::OnBnClickedOk)
     ON_CBN_SELCHANGE(IDC_COMBO_PROCESSLIST, &CSearchFeaturesDlg::OnCbnSelchangeComboProcesslist)
     ON_BN_CLICKED(IDC_BTN_SEARCH, &CSearchFeaturesDlg::OnBnClickedBtnSearch)
+    ON_BN_CLICKED(IDC_BTN_TEST, &CSearchFeaturesDlg::OnBnClickedBtnTest)
 END_MESSAGE_MAP()
 
 
@@ -189,11 +204,8 @@ void CSearchFeaturesDlg::GetAllProcess()
     bProcess = Process32First(hProcess, &pe);              //获取第一个进程信息
     while (bProcess)
     {
-//         strTitle.Format(_T("[%d] "), pe.th32ProcessID);
-//         strTitle += pe.szExeFile;
         strTitle.Format(_T("%s [%d]"), pe.szExeFile, pe.th32ProcessID);
         m_comboProcessList.InsertString(-1, strTitle);
-        //m_mapProcessList.insert(std::make_pair(pe.th32ProcessID,pe.szExeFile));
         bProcess = Process32Next(hProcess, &pe);
     }
 }
@@ -237,40 +249,62 @@ inline HANDLE CSearchFeaturesDlg::GetProcessHandle(DWORD dwPid)
     return OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPid);
 }
 
-//////////////////////////////////////////////////
-#include <windows.h>
-
-
-
-
-
-
-
-/////////////////////////////
-
 void CSearchFeaturesDlg::OnBnClickedBtnSearch()
 {
     if (m_hProcess == INVALID_HANDLE_VALUE)
     {
-        MessageBox(_T("还未选择进程"));
+        MessageBox(_T("没有选择进程，请选择进程"));
         return;
     }
-    /*
-    findMatchingCode() 参数说明：
-    1) hProcess		要打开的进程句柄
-    2) markCode		特征码,支持通配符（**），如: 55 8b ec ** 56 83 ec 20 ** ** 08 d9 ee
-    3) memBeginAddr		起始搜索地址
-    4) memEndAddr		结束搜索地址
-    5) retAddr[]		记录找到的地址,传入这个参数前一定要清0，如 DWORD retAddr[32] = {0};  或者 DWORD *retAddr = new DWORD[32]();
-    6) deviation		特征码地址离目标地址的偏移距离，上负下正
-    7) isCall		是否为找CALL的跳转地址，true 则 retAddr[] 返回的是CALL跳转的地址
-    8) isAll		是否查找所有符合的地址，false找到第一个符合的地址后就结束搜索，true继续搜索，直到搜索地址大于结束地址（memEndAddr）
-    return返回值		找到的地址总数
-    搜不到内存可能是保护属性没有选对
-    */
+
     FeatureCode fc;
     DWORD retAddr[32] = { 0 };
     DWORD dwCount = fc.FindMatchingCode(m_hProcess, "85 C0 74 44 8B 40 ?? 85 C0 74 3D 83 B8 ?? ?? ?? ?? 00 74 34 8B 0D ?? ?? ?? ?? 85 C9 74 2A 8B 01 FF 50 ?? 85 C0", 0x00401000, 0x07FFFFFF, retAddr, -4, false, false);
     DWORD dwValue;
     ReadProcessMemory(m_hProcess,(LPVOID)retAddr[0],&dwValue,4,NULL);
+}
+
+DWORD CSearchFeaturesDlg::Seach(std::string markCode, DWORD retAddr[])
+{
+    FeatureCode fc;
+    
+    DWORD dwBeginAddr = std::stoi(m_dwBeginAddr.GetBuffer(), nullptr, 16);
+    DWORD dwEndAddr = std::stoi(m_dwEndAddr.GetBuffer(), nullptr, 16);
+    return fc.FindMatchingCode(m_hProcess, markCode, dwBeginAddr, dwEndAddr, retAddr, m_nOffset, false, false);
+}
+
+void CSearchFeaturesDlg::OnBnClickedBtnTest()
+{
+    UpdateData();
+
+    if (m_hProcess == INVALID_HANDLE_VALUE)
+    {
+        MessageBox(_T("没有选择进程，请选择进程"));
+        return;
+    }
+
+    DWORD dwRetAddr[64] = { 0 };
+    std::string strMarkCode = CStringA(m_strMarkCode);
+    DWORD dwCount = Seach(strMarkCode,dwRetAddr);
+
+    if (dwCount == 0)
+    {
+        MessageBox(_T("该特征码没有匹配到任何内容 请检查特征码是否提取正确"));
+        return ;
+    }
+    CString strMsg;
+
+    if (dwCount>1)
+    {
+        DWORD dwValue;
+        ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, 4, NULL);
+        strMsg.Format(_T("该特征码匹配到多个内容，建议更换特征码，第一个内容的值为：%X"), dwValue);
+        MessageBox(strMsg);
+        return;
+    }
+    DWORD dwValue;
+    ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, 4, NULL);
+
+    strMsg.Format(_T("%X"), dwValue);
+    MessageBox(strMsg);
 }
