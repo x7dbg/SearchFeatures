@@ -42,7 +42,8 @@ public:
 
     afx_msg void OnBnClickedBtnSearch();
 
-    
+    afx_msg void OnBnClickedBtnAddlist();
+
 private:
     /*
     GetProcessHandle
@@ -83,4 +84,10 @@ private:
 
     //特征码搜索结束地址
     CString m_dwEndAddr;
+
+    //特征码列表
+    CString m_strMarkCodeList;
+    
+    // 表明用户搜索类型，0==基址 1==call 2==偏移
+    int m_btnType;
 };

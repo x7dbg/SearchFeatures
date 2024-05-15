@@ -55,9 +55,11 @@ CSearchFeaturesDlg::CSearchFeaturesDlg(CWnd* pParent /*=NULL*/)
     , m_strNotes(_T(""))
     , m_strMarkCode(_T(""))
     , m_nOffset(0)
-    , m_uLen(0)
+    , m_uLen(4)
     , m_dwBeginAddr(_T("0x00401000"))
     , m_dwEndAddr(_T("0x07FFFFFF"))
+    , m_strMarkCodeList(_T(""))
+    , m_btnType(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -73,6 +75,8 @@ void CSearchFeaturesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_EDIT_LENGTH, m_uLen);
     DDX_Text(pDX, IDC_EDIT_BEGINADDR, m_dwBeginAddr);
     DDX_Text(pDX, IDC_EDIT_ENDADDR, m_dwEndAddr);
+    DDX_Text(pDX, IDC_EDIT_MARKCODELIST, m_strMarkCodeList);
+    DDX_Radio(pDX, IDC_RADIO_BASEADDR, m_btnType);
 }
 
 BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
@@ -83,6 +87,7 @@ BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
     ON_CBN_SELCHANGE(IDC_COMBO_PROCESSLIST, &CSearchFeaturesDlg::OnCbnSelchangeComboProcesslist)
     ON_BN_CLICKED(IDC_BTN_SEARCH, &CSearchFeaturesDlg::OnBnClickedBtnSearch)
     ON_BN_CLICKED(IDC_BTN_TEST, &CSearchFeaturesDlg::OnBnClickedBtnTest)
+    ON_BN_CLICKED(IDC_BTN_ADDLIST, &CSearchFeaturesDlg::OnBnClickedBtnAddlist)
 END_MESSAGE_MAP()
 
 
@@ -297,14 +302,42 @@ void CSearchFeaturesDlg::OnBnClickedBtnTest()
     if (dwCount>1)
     {
         DWORD dwValue;
-        ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, 4, NULL);
+        ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, m_uLen, NULL);
         strMsg.Format(_T("该特征码匹配到多个内容，建议更换特征码，第一个内容的值为：%X"), dwValue);
         MessageBox(strMsg);
         return;
     }
     DWORD dwValue;
-    ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, 4, NULL);
+    ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, m_uLen, NULL);
 
     strMsg.Format(_T("%X"), dwValue);
     MessageBox(strMsg);
+}
+
+
+void CSearchFeaturesDlg::OnBnClickedBtnAddlist()
+{
+    UpdateData();
+
+    CString strTmp;
+    CString strType = _T("基址");
+    switch (m_btnType)
+    {
+    case 0:
+        strType = _T("基址");
+        break;
+    case 1:
+        strType = _T("CALL");
+        break;
+    case 2:
+        strType = _T("偏移");
+        break;
+    default:
+        break;
+    }
+
+    strTmp.Format(_T("%s,%s,%s,%d,%d,%s\r\n"), m_strName, m_strNotes, m_strMarkCode, m_nOffset, m_uLen,strType);
+    m_strMarkCodeList += strTmp;
+    
+    UpdateData(FALSE);
 }
