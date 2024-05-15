@@ -1,11 +1,12 @@
 #pragma once
 #include <string>
 
-class FeatureCode
+//计划加入几种不同的搜索模式，为了方便管理所以定义了一个特征码搜索的类
+class CFeatureCode
 {
 public:
-	FeatureCode(void);
-	~FeatureCode(void);
+	CFeatureCode(void);
+	~CFeatureCode(void);
 	
 
     //Sunday算法搜索 网上抄来的 感谢网友  之所以定义一个类是因为还想加入其他的扫描算法。。。

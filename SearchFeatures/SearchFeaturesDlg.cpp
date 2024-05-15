@@ -272,16 +272,16 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
         return;
     }
 
-    FeatureCode fc;
+    CFeatureCode fc;
     DWORD retAddr[32] = { 0 };
     DWORD dwCount = fc.FindMatchingCode(m_hProcess, "85 C0 74 44 8B 40 ?? 85 C0 74 3D 83 B8 ?? ?? ?? ?? 00 74 34 8B 0D ?? ?? ?? ?? 85 C9 74 2A 8B 01 FF 50 ?? 85 C0", 0x00401000, 0x07FFFFFF, retAddr, -4, false, false);
     DWORD dwValue;
     ReadProcessMemory(m_hProcess,(LPVOID)retAddr[0],&dwValue,4,NULL);
 }
 
-DWORD CSearchFeaturesDlg::Seach(std::string markCode, DWORD retAddr[])
+DWORD CSearchFeaturesDlg::Search(std::string markCode, DWORD retAddr[])
 {
-    FeatureCode fc;
+    CFeatureCode fc;
     
     DWORD dwBeginAddr = std::stoi(m_dwBeginAddr.GetBuffer(), nullptr, 16);
     DWORD dwEndAddr = std::stoi(m_dwEndAddr.GetBuffer(), nullptr, 16);
@@ -300,7 +300,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnTest()
 
     DWORD dwRetAddr[64] = { 0 };
     std::string strMarkCode = CStringA(m_strMarkCode);
-    DWORD dwCount = Seach(strMarkCode,dwRetAddr);
+    DWORD dwCount = Search(strMarkCode,dwRetAddr);
 
     if (dwCount == 0)
     {

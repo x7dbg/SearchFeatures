@@ -2,14 +2,14 @@
 #include "FeatureCode.h"
 using namespace std;
 
-FeatureCode::FeatureCode(void)
+CFeatureCode::CFeatureCode(void)
 {}
 
-FeatureCode::~FeatureCode(void)
+CFeatureCode::~CFeatureCode(void)
 {}
 
 
-DWORD FeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memBeginAddr, DWORD memEndAddr, DWORD retAddr[], int deviation, bool isCall, bool isAll)
+DWORD CFeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD memBeginAddr, DWORD memEndAddr, DWORD retAddr[], int deviation, bool isCall, bool isAll)
 {
     //----------------------处理特征码----------------------//
     //去除所有空格
