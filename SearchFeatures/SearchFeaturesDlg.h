@@ -55,6 +55,9 @@ public:
     //加载特征码文件按钮响应函数
     afx_msg void OnBnClickedBtnLoad();
 
+    //生成代码按钮响应函数
+    afx_msg void OnBnClickedBtnCreatecode();
+
 private:
     /*
     GetProcessHandle
@@ -63,16 +66,9 @@ private:
     返回值为进程句柄
     */
     inline HANDLE GetProcessHandle(DWORD dwPid);
+
     //用于获取当前所有进程
     void GetAllProcess();
-
-    /*
-    Search
-    搜索特征码，由于测试特征码和搜索特征码都要搜索，为了代码复用所以定义了一个搜索函数
-    strMarkCode		特征码, 支持通配符（**），如: 55 8b ec ** 56 83 ec 20 * * ** 08 d9 ee
-    dwRetAddrArr[]		记录找到的地址, 传入这个参数前一定要清0，如 DWORD retAddr[32] = { 0 };  或者 DWORD *retAddr = new DWORD[32]();
-    */
-    DWORD Search(std::string strMarkCode, DWORD dwRetAddrArr[]);
 
     /*
     SplitString 字符串分割函数
@@ -81,6 +77,13 @@ private:
     返回值：分割出来的字符串数组
     */
     std::vector<CString> SplitString(const CString& str, TCHAR delimiter);
+    
+    /*
+    CreateCode生成代码函数
+    创建特征码对应的代码
+    参数如果为0生成C++代码 如果为1生成易语言
+    */
+    void CreateCode(int nCodeIndex);
 private:
     // 用于显示进程列表的ComboBox控件
     CComboBox m_comboProcessList;
@@ -120,6 +123,7 @@ private:
 
     // 表明要生成什么语言的代码
     CComboBox m_comboBoxLanguage;
+    
     // 特征码列表edit控件变量
     CEdit m_editMarkCodeList;
 };

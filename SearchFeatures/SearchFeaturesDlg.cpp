@@ -93,6 +93,7 @@ BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BTN_ADDLIST, &CSearchFeaturesDlg::OnBnClickedBtnAddlist)
     ON_BN_CLICKED(IDC_BTN_SAVE, &CSearchFeaturesDlg::OnBnClickedBtnSave)
     ON_BN_CLICKED(IDC_BTN_LOAD, &CSearchFeaturesDlg::OnBnClickedBtnLoad)
+    ON_BN_CLICKED(IDC_BTN_CREATECODE, &CSearchFeaturesDlg::OnBnClickedBtnCreatecode)
 END_MESSAGE_MAP()
 
 
@@ -131,7 +132,7 @@ BOOL CSearchFeaturesDlg::OnInitDialog()
     CheckDlgButton(IDC_RADIO_BASEADDR, BST_CHECKED);
 
     DWORD dwStyle = m_listResult.GetExtendedStyle();
-    dwStyle |= LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES | LVS_EX_INFOTIP | LVS_EX_DOUBLEBUFFER;
+    dwStyle |= LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_INFOTIP | LVS_EX_DOUBLEBUFFER;
     m_listResult.SetExtendedStyle(dwStyle);
     m_listResult.InsertColumn(0, _T("名  称"), LVCFMT_LEFT, 110);
     m_listResult.InsertColumn(1, _T("结  果"), LVCFMT_LEFT, 100);
@@ -275,38 +276,47 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
 {
     if (m_hProcess == INVALID_HANDLE_VALUE)
     {
-        MessageBox(_T("没有选择进程，请选择进程"));
+        MessageBox(_T("没有选择进程，请选择进程"), _T("错误"));
         return;
     }
     if (m_strMarkCodeList.IsEmpty())
     {
-        MessageBox(_T("特征码列表为空！！！"));
+        MessageBox(_T("特征码列表为空！！！"), _T("错误"));
         return;
     }
     
-    CFeatureCode fc;
     std::vector<CString> vecMarkCodeList = SplitString(m_strMarkCodeList,_T('\n'));
+    CFeatureCode fc;
+
     for each (auto var in vecMarkCodeList)
     {
+        if (var.IsEmpty())
+        {
+            continue;
+        }
         std::vector<CString> vecMarkCodeLine = SplitString(var,_T(','));
         DWORD dwRetAddr[32] = { 0 };
         std::string strMarkCode = CStringA(vecMarkCodeLine[2]);
-        DWORD dwCount = Search(strMarkCode, dwRetAddr);
+
+        DWORD dwBeginAddr = std::stoi(m_dwBeginAddr.GetBuffer(), nullptr, 16);
+        DWORD dwEndAddr = std::stoi(m_dwEndAddr.GetBuffer(), nullptr, 16);
+        DWORD dwCount = fc.FindMatchingCode(m_hProcess, strMarkCode, dwBeginAddr, 
+            dwEndAddr, dwRetAddr, _ttoi(vecMarkCodeLine[3]), 
+            vecMarkCodeLine[5].CompareNoCase(_T("CALL"))==0, false);
+
         if (dwCount>0)
         {
             DWORD dwValue;
-            ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, m_uLen, NULL);
+            ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, _ttoi(vecMarkCodeLine[4]), NULL);
+            CString strResult;
+            strResult.Format(_T("%0x08X"), dwValue);
+            DWORD dwCount = m_listResult.GetItemCount();
+            m_listResult.InsertItem(dwCount, _T(""));
+            m_listResult.SetItemText(dwCount, 0, vecMarkCodeLine[0]);
+            m_listResult.SetItemText(dwCount, 1, strResult);
+            m_listResult.SetItemText(dwCount, 2, vecMarkCodeLine[1]);
         }
     }
-}
-
-DWORD CSearchFeaturesDlg::Search(std::string markCode, DWORD retAddr[])
-{
-    CFeatureCode fc;
-    
-    DWORD dwBeginAddr = std::stoi(m_dwBeginAddr.GetBuffer(), nullptr, 16);
-    DWORD dwEndAddr = std::stoi(m_dwEndAddr.GetBuffer(), nullptr, 16);
-    return fc.FindMatchingCode(m_hProcess, markCode, dwBeginAddr, dwEndAddr, retAddr, m_nOffset, false, false);
 }
 
 void CSearchFeaturesDlg::OnBnClickedBtnTest()
@@ -315,17 +325,21 @@ void CSearchFeaturesDlg::OnBnClickedBtnTest()
 
     if (m_hProcess == INVALID_HANDLE_VALUE)
     {
-        MessageBox(_T("没有选择进程，请选择进程"));
+        MessageBox(_T("没有选择进程，请选择进程"), _T("错误"));
         return;
     }
 
     DWORD dwRetAddr[64] = { 0 };
+    CFeatureCode fc;
+
+    DWORD dwBeginAddr = std::stoi(m_dwBeginAddr.GetBuffer(), nullptr, 16);
+    DWORD dwEndAddr = std::stoi(m_dwEndAddr.GetBuffer(), nullptr, 16);
     std::string strMarkCode = CStringA(m_strMarkCode);
-    DWORD dwCount = Search(strMarkCode,dwRetAddr);
+    DWORD dwCount = fc.FindMatchingCode(m_hProcess, strMarkCode, dwBeginAddr, dwEndAddr, dwRetAddr, m_nOffset, m_btnType==1, false);
 
     if (dwCount == 0)
     {
-        MessageBox(_T("该特征码没有匹配到任何内容 请检查特征码是否提取正确"));
+        MessageBox(_T("该特征码没有匹配到任何内容 请检查特征码是否提取正确"), _T("错误"));
         return ;
     }
     CString strMsg;
@@ -335,14 +349,14 @@ void CSearchFeaturesDlg::OnBnClickedBtnTest()
         DWORD dwValue;
         ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, m_uLen, NULL);
         strMsg.Format(_T("该特征码匹配到多个内容，建议更换特征码，第一个内容的值为：%X"), dwValue);
-        MessageBox(strMsg);
+        MessageBox(strMsg, _T("警告"));
         return;
     }
     DWORD dwValue;
     ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, m_uLen, NULL);
 
     strMsg.Format(_T("%X"), dwValue);
-    MessageBox(strMsg);
+    MessageBox(strMsg,_T("测试结果"));
 }
 
 
@@ -366,7 +380,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnAddlist()
     default:
         break;
     }
-
+    
     strTmp.Format(_T("%s,%s,%s,%d,%d,%s\r\n"), m_strName, m_strNotes, m_strMarkCode, m_nOffset, m_uLen,strType);
     m_strMarkCodeList += strTmp;
     
@@ -388,7 +402,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnSave()
         fopen_s(&pFile, strPath.c_str(), "wb+");
         if (pFile == nullptr)
         {
-            MessageBox(_T("打开文件失败"));
+            MessageBox(_T("打开文件失败"),_T("错误"));
             return;
         }
         std::string strTmp = CStringA(m_strMarkCodeList);
@@ -410,7 +424,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnLoad()
         fopen_s(&pFile, strPath.c_str(), "rb");
         if (pFile == nullptr)
         {
-            MessageBox(_T("打开文件失败"));
+            MessageBox(_T("打开文件失败"), _T("错误"));
             return;
         }
         fseek(pFile, 0, SEEK_END);//把文件指针移动到文件尾
@@ -444,4 +458,22 @@ std::vector<CString> CSearchFeaturesDlg::SplitString(const CString& str, TCHAR d
     CString token = str.Mid(start);
     tokens.push_back(token);
     return tokens;
+}
+
+void CSearchFeaturesDlg::OnBnClickedBtnCreatecode()
+{
+    CreateCode(m_comboBoxLanguage.GetCurSel());
+}
+
+void CSearchFeaturesDlg::CreateCode(int nCode)
+{
+    switch (nCode)
+    {
+    case 0:
+        break;
+    case 1:
+        break;
+    default:
+        break;
+    }
 }
