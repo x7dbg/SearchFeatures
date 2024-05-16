@@ -28,7 +28,7 @@ protected:
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
-	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
+    afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
@@ -78,15 +78,12 @@ private:
     */
     std::vector<CString> SplitString(const CString& str, TCHAR delimiter);
     
-    /*
-    CreateCode生成代码函数
-    创建特征码对应的代码
-    参数如果为0生成C++代码 如果为1生成易语言
-    */
-    void CreateCode(int nCodeIndex);
+    void CreateCppCode();
+    void CreateECode();
 
-    void CreateCppCode(const CString& strPath);
-    void CreateECode(const CString& strPath);
+    //初始化UI
+    void InitUI();
+
 private:
     // 用于显示进程列表的ComboBox控件
     CComboBox m_comboProcessList;

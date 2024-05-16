@@ -13,6 +13,8 @@
 #endif
 
 
+#define CODEPATH "./代码.txt"
+
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -129,19 +131,8 @@ BOOL CSearchFeaturesDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
     GetAllProcess();
-    CheckDlgButton(IDC_RADIO_BASEADDR, BST_CHECKED);
+    InitUI();
 
-    DWORD dwStyle = m_listResult.GetExtendedStyle();
-    dwStyle |= LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_INFOTIP | LVS_EX_DOUBLEBUFFER;
-    m_listResult.SetExtendedStyle(dwStyle);
-    m_listResult.InsertColumn(0, _T("名  称"), LVCFMT_LEFT, 110);
-    m_listResult.InsertColumn(1, _T("结  果"), LVCFMT_LEFT, 100);
-    m_listResult.InsertColumn(2, _T("注  释"), LVCFMT_LEFT, 110);
-   
-    m_comboBoxLanguage.InsertString(-1,_T("C++"));
-    m_comboBoxLanguage.InsertString(-1, _T("易语言"));
-    
-    m_comboBoxLanguage.SetCurSel(0);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -198,13 +189,12 @@ HCURSOR CSearchFeaturesDlg::OnQueryDragIcon()
 
 void CSearchFeaturesDlg::OnBnClickedOk()
 {
-    // TODO:  在此添加控件通知处理程序代码
-    //CDialogEx::OnOK();
 }
 
 
 BOOL CSearchFeaturesDlg::PreTranslateMessage(MSG* pMsg)
 {
+    //屏蔽Esc按钮 避免用户按一下Esc后直接退出程序
     if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE)
     {
         return TRUE;
@@ -291,14 +281,14 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
     std::vector<CString> vecMarkCodeList = SplitString(m_strMarkCodeList,_T('\n'));
     CFeatureCode fc;
 
-    
+    //遍历每一行特征码名字 
     for each (auto var in vecMarkCodeList)
     {
         if (var.IsEmpty())
         {
             continue;
         }
-        //遍历每一行特征码名字 注释 特征码 偏移 读取长度 读取方式(基址 偏移 CALL)
+        //获取 注释 特征码 偏移 读取长度 读取方式(基址 偏移 CALL)
         std::vector<CString> vecMarkCodeLine = SplitString(var,_T(','));
         DWORD dwRetAddr[32] = { 0 };
         std::string strMarkCode = CStringA(vecMarkCodeLine[2]);
@@ -311,8 +301,11 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
 
         if (dwCount>0)
         {
+            //取值
             DWORD dwValue;
             ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, _ttoi(vecMarkCodeLine[4]), NULL);
+
+            //将结果设置到UI上
             CString strResult;
             strResult.Format(_T("0x%08X"), dwValue);
             DWORD dwCount = m_listResult.GetItemCount();
@@ -337,8 +330,10 @@ void CSearchFeaturesDlg::OnBnClickedBtnTest()
     DWORD dwRetAddr[64] = { 0 };
     CFeatureCode fc;
 
+    //由于UI上的起止地址是字符串，所以要转成数字
     DWORD dwBeginAddr = std::stoi(m_dwBeginAddr.GetBuffer(), nullptr, 16);
     DWORD dwEndAddr = std::stoi(m_dwEndAddr.GetBuffer(), nullptr, 16);
+
     std::string strMarkCode = CStringA(m_strMarkCode);
     DWORD dwCount = fc.FindMatchingCode(m_hProcess, strMarkCode, dwBeginAddr, dwEndAddr, dwRetAddr, m_nOffset, m_btnType==1, false);
 
@@ -385,7 +380,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnAddlist()
     default:
         break;
     }
-    
+    //格式化特征码列表 显示格式为 名字 注释 特征码 偏移 读取长度 类型
     strTmp.Format(_T("%s,%s,%s,%d,%d,%s\r\n"), m_strName, m_strNotes, m_strMarkCode, m_nOffset, m_uLen,strType);
     m_strMarkCodeList += strTmp;
     
@@ -402,6 +397,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnSave()
     CFileDialog openFileDlg(FALSE, NULL, strFileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, strFilter, NULL);
     if (openFileDlg.DoModal() == IDOK)
     {
+        //选择路径后 将特征码列表保存到文件中
         std::string strPath = CStringA(openFileDlg.GetPathName());
         FILE *pFile = nullptr;
         fopen_s(&pFile, strPath.c_str(), "wb+");
@@ -424,6 +420,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnLoad()
     CFileDialog openFileDlg(TRUE, NULL, fileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, filter, NULL);
     if (openFileDlg.DoModal() == IDOK)
     {
+        //选择文件后 从文件中读取特征码列表显示到UI上
         std::string strPath = CStringA(openFileDlg.GetPathName());
         FILE *pFile = nullptr;
         fopen_s(&pFile, strPath.c_str(), "rb");
@@ -432,12 +429,14 @@ void CSearchFeaturesDlg::OnBnClickedBtnLoad()
             MessageBox(_T("打开文件失败"), _T("错误"));
             return;
         }
+
         fseek(pFile, 0, SEEK_END);//把文件指针移动到文件尾
-        long fileSize = ftell(pFile);
-        char *szMarkCode = new char[fileSize + 2];
+        long fileSize = ftell(pFile);//获取文件大小
+        char *szMarkCode = new char[fileSize + 2];//分配内存
         memset(szMarkCode, 0, fileSize + 2);
         rewind(pFile);
 
+        //读取文件并显示
         fread(szMarkCode, 1, fileSize, pFile);
         szMarkCode[fileSize] = '\0';
         m_strMarkCodeList = szMarkCode;
@@ -449,6 +448,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnLoad()
 
 std::vector<CString> CSearchFeaturesDlg::SplitString(const CString& str, TCHAR delimiter)
 {
+    //根据传进来的delimiter分割字符串 并存储到vector中再返回
     std::vector<CString> tokens;
     int start = 0;
     for (int i = 0; i < str.GetLength(); i++)
@@ -467,47 +467,65 @@ std::vector<CString> CSearchFeaturesDlg::SplitString(const CString& str, TCHAR d
 
 void CSearchFeaturesDlg::OnBnClickedBtnCreatecode()
 {
-    CreateCode(m_comboBoxLanguage.GetCurSel());
-}
-
-void CSearchFeaturesDlg::CreateCode(int nCode)
-{
     if (m_listResult.GetItemCount() == 0)
     {
-        MessageBox(_T("请先搜索出结果再生成代码"),_T("警告"));
+        MessageBox(_T("请先搜索出结果再生成代码"), _T("警告"));
 
         return;
     }
-    FILE *pFile = nullptr;
-    fopen_s(&pFile, "./代码.txt", "wb+");
-    if (pFile == nullptr)
-    {
-        MessageBox(_T("打开文件失败"), _T("错误"));
-        return;
-    }
-    
-    switch (nCode)
+
+    //根据用户选择来生成对应的代码
+    switch (m_comboBoxLanguage.GetCurSel())
     {
     case 0://生成C++代码
     {
-        CString strCode = _T("");
-
-        for (int i = 0; i < m_listResult.GetItemCount();i++)
-        {
-            CString strLine;
-            strLine.Format(_T("#define %s \t%s \t//%s\r\n"), m_listResult.GetItemText(i, 0), m_listResult.GetItemText(i, 1), m_listResult.GetItemText(i, 2));
-            strCode += strLine;
-            
-        }
-        std::string strTmp = CStringA(strCode);
-        fprintf(pFile, strTmp.c_str());
-        break;
+        CreateCppCode();
     }
     case 1://生成易语言代码
         break;
     default:
         break;
     }
+    ShellExecute(NULL, L"open", L"notepad", _T(CODEPATH), NULL, SW_SHOWNORMAL);
+}
+
+void CSearchFeaturesDlg::InitUI()
+{
+    CheckDlgButton(IDC_RADIO_BASEADDR, BST_CHECKED);
+
+    DWORD dwStyle = m_listResult.GetExtendedStyle();
+    dwStyle |= LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_INFOTIP | LVS_EX_DOUBLEBUFFER;
+    m_listResult.SetExtendedStyle(dwStyle);
+    m_listResult.InsertColumn(0, _T("名  称"), LVCFMT_LEFT, 110);
+    m_listResult.InsertColumn(1, _T("结  果"), LVCFMT_LEFT, 100);
+    m_listResult.InsertColumn(2, _T("注  释"), LVCFMT_LEFT, 110);
+
+    m_comboBoxLanguage.InsertString(-1, _T("C++"));
+    m_comboBoxLanguage.InsertString(-1, _T("易语言"));
+
+    m_comboBoxLanguage.SetCurSel(0);
+}
+
+void CSearchFeaturesDlg::CreateCppCode()
+{
+    FILE *pFile = nullptr;
+    fopen_s(&pFile, CODEPATH, "wb+");
+    if (pFile == nullptr)
+    {
+        MessageBox(_T("打开文件失败"), _T("错误"));
+        return;
+    }
+    CString strCode = _T("");
+
+    for (int i = 0; i < m_listResult.GetItemCount(); i++)
+    {
+        CString strLine;
+        strLine.Format(_T("#define %s \t%s \t//%s\r\n"), m_listResult.GetItemText(i, 0), m_listResult.GetItemText(i, 1), m_listResult.GetItemText(i, 2));
+        strCode += strLine;
+
+    }
+    std::string strTmp = CStringA(strCode);
+    fprintf(pFile, strTmp.c_str());
+
     fclose(pFile);
-    ShellExecute(NULL, L"open", L"notepad", _T("./代码.txt"), NULL, SW_SHOWNORMAL);
 }
