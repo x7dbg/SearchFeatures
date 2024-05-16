@@ -284,7 +284,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
         MessageBox(_T("特征码列表为空！！！"), _T("错误"));
         return;
     }
-    
+    m_listResult.DeleteAllItems();
     std::vector<CString> vecMarkCodeList = SplitString(m_strMarkCodeList,_T('\n'));
     CFeatureCode fc;
 
@@ -499,5 +499,3 @@ void CSearchFeaturesDlg::CreateCode(int nCode)
     }
     fclose(pFile);
 }
-
-
