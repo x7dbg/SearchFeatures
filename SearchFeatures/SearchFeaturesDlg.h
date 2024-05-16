@@ -6,7 +6,7 @@
 #include "afxwin.h"
 #include "FeatureCode.h"
 #include "afxcmn.h"
-
+#include <vector>
 
 // CSearchFeaturesDlg 对话框
 class CSearchFeaturesDlg : public CDialogEx
@@ -74,6 +74,20 @@ private:
     */
     DWORD Search(std::string strMarkCode, DWORD dwRetAddrArr[]);
 
+    std::vector<CString> SplitString(const CString& str, TCHAR delimiter) {
+        std::vector<CString> tokens;
+        int start = 0;
+        for (int i = 0; i < str.GetLength(); i++) {
+            if (str[i] == delimiter) {
+                CString token = str.Mid(start, i - start);
+                tokens.push_back(token);
+                start = i + 1;
+            }
+        }
+        CString token = str.Mid(start);
+        tokens.push_back(token);
+        return tokens;
+    }
 private:
     // 用于显示进程列表的ComboBox控件
     CComboBox m_comboProcessList;
@@ -113,4 +127,6 @@ private:
 
     // 表明要生成什么语言的代码
     CComboBox m_comboBoxLanguage;
+    // 特征码列表edit控件变量
+    CEdit m_editMarkCodeList;
 };

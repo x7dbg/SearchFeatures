@@ -79,6 +79,7 @@ void CSearchFeaturesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Radio(pDX, IDC_RADIO_BASEADDR, m_btnType);
     DDX_Control(pDX, IDC_LIST_RESULT, m_listResult);
     DDX_Control(pDX, IDC_COMBO_LANGUAGE, m_comboBoxLanguage);
+    DDX_Control(pDX, IDC_EDIT_MARKCODELIST, m_editMarkCodeList);
 }
 
 BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
@@ -277,12 +278,26 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
         MessageBox(_T("没有选择进程，请选择进程"));
         return;
     }
-
+    if (m_strMarkCodeList.IsEmpty())
+    {
+        MessageBox(_T("特征码列表为空！！！"));
+        return;
+    }
+    
     CFeatureCode fc;
-    DWORD retAddr[32] = { 0 };
-    DWORD dwCount = fc.FindMatchingCode(m_hProcess, "85 C0 74 44 8B 40 ?? 85 C0 74 3D 83 B8 ?? ?? ?? ?? 00 74 34 8B 0D ?? ?? ?? ?? 85 C9 74 2A 8B 01 FF 50 ?? 85 C0", 0x00401000, 0x07FFFFFF, retAddr, -4, false, false);
-    DWORD dwValue;
-    ReadProcessMemory(m_hProcess,(LPVOID)retAddr[0],&dwValue,4,NULL);
+    std::vector<CString> vecMarkCodeList = SplitString(m_strMarkCodeList,_T('\n'));
+    for each (auto var in vecMarkCodeList)
+    {
+        std::vector<CString> vecMarkCodeLine = SplitString(var,_T(','));
+        DWORD dwRetAddr[32] = { 0 };
+        std::string strMarkCode = CStringA(vecMarkCodeLine[2]);
+        DWORD dwCount = Search(strMarkCode, dwRetAddr);
+        if (dwCount>0)
+        {
+            DWORD dwValue;
+            ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, m_uLen, NULL);
+        }
+    }
 }
 
 DWORD CSearchFeaturesDlg::Search(std::string markCode, DWORD retAddr[])
