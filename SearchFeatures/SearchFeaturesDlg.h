@@ -49,6 +49,12 @@ public:
     //添加到列表按钮响应函数
     afx_msg void OnBnClickedBtnAddlist();
 
+    //保存特征码到文件按钮响应函数
+    afx_msg void OnBnClickedBtnSave();
+
+    //加载特征码文件按钮响应函数
+    afx_msg void OnBnClickedBtnLoad();
+
 private:
     /*
     GetProcessHandle
@@ -107,6 +113,4 @@ private:
 
     // 表明要生成什么语言的代码
     CComboBox m_comboBoxLanguage;
-public:
-    afx_msg void OnBnClickedBtnSave();
 };

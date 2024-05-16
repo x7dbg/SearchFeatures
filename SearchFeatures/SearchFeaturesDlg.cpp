@@ -91,6 +91,7 @@ BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BTN_TEST, &CSearchFeaturesDlg::OnBnClickedBtnTest)
     ON_BN_CLICKED(IDC_BTN_ADDLIST, &CSearchFeaturesDlg::OnBnClickedBtnAddlist)
     ON_BN_CLICKED(IDC_BTN_SAVE, &CSearchFeaturesDlg::OnBnClickedBtnSave)
+    ON_BN_CLICKED(IDC_BTN_LOAD, &CSearchFeaturesDlg::OnBnClickedBtnLoad)
 END_MESSAGE_MAP()
 
 
@@ -362,10 +363,9 @@ void CSearchFeaturesDlg::OnBnClickedBtnSave()
 {
     UpdateData();
 
-    CString fileName = L"test.bp";			//默认打开的文件名
-    CString filter = L"特征码文件 (*.bp)|*.bp||";	//文件过虑的类型
-    CFileDialog openFileDlg(FALSE, NULL, fileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, filter, NULL);
-    //openFileDlg.GetOFN().lpstrInitialDir = L"E:\\FileTest\\test.doc";
+    CString strFileName = _T("test.bp");			//默认打开的文件名
+    CString strFilter = _T("特征码文件 (*.bp)|*.bp||");	//文件过虑的类型
+    CFileDialog openFileDlg(FALSE, NULL, strFileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, strFilter, NULL);
     if (openFileDlg.DoModal() == IDOK)
     {
         std::string strPath = CStringA(openFileDlg.GetPathName());
@@ -374,9 +374,41 @@ void CSearchFeaturesDlg::OnBnClickedBtnSave()
         if (pFile == nullptr)
         {
             MessageBox(_T("打开文件失败"));
+            return;
         }
         std::string strTmp = CStringA(m_strMarkCodeList);
         fprintf(pFile, strTmp.c_str());
         fclose(pFile);
+    }
+}
+
+
+void CSearchFeaturesDlg::OnBnClickedBtnLoad()
+{
+    CString fileName = _T("test.bp");			//默认打开的文件名
+    CString filter = _T("特征码文件 (*.bp)|*.bp||");	//文件过虑的类型
+    CFileDialog openFileDlg(TRUE, NULL, fileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, filter, NULL);
+    if (openFileDlg.DoModal() == IDOK)
+    {
+        std::string strPath = CStringA(openFileDlg.GetPathName());
+        FILE *pFile = nullptr;
+        fopen_s(&pFile, strPath.c_str(), "rb");
+        if (pFile == nullptr)
+        {
+            MessageBox(_T("打开文件失败"));
+            return;
+        }
+        fseek(pFile, 0, SEEK_END);//把文件指针移动到文件尾
+        long fileSize = ftell(pFile);
+        char *szMarkCode = new char[fileSize + 2];
+        memset(szMarkCode, 0, fileSize + 2);
+        rewind(pFile);
+
+        fread(szMarkCode, 1, fileSize, pFile);
+        szMarkCode[fileSize] = '\0';
+        m_strMarkCodeList = szMarkCode;
+        delete szMarkCode;
+        fclose(pFile);
+        UpdateData(FALSE);
     }
 }
