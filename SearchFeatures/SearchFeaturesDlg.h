@@ -84,6 +84,9 @@ private:
     参数如果为0生成C++代码 如果为1生成易语言
     */
     void CreateCode(int nCodeIndex);
+
+    void CreateCppCode(const CString& strPath);
+    void CreateECode(const CString& strPath);
 private:
     // 用于显示进程列表的ComboBox控件
     CComboBox m_comboProcessList;

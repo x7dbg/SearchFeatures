@@ -1,0 +1,6 @@
+#define 人物基址	0x0126F8F8	//人物的基址
+#define 背包数组基址	0x01269A70	//背包数组的基址
+#define 人物基址	0x0126F8F8	//人物的基址
+#define 背包数组基址	0x01269A70	//背包数组的基址
+#define BASE_ROLE	0x0126F8F8	//人物的基址
+#define BASE_BAG	0x01269A70	//背包数组的基址

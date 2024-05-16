@@ -309,7 +309,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
             DWORD dwValue;
             ReadProcessMemory(m_hProcess, (LPVOID)dwRetAddr[0], &dwValue, _ttoi(vecMarkCodeLine[4]), NULL);
             CString strResult;
-            strResult.Format(_T("%0x08X"), dwValue);
+            strResult.Format(_T("0x%08X"), dwValue);
             DWORD dwCount = m_listResult.GetItemCount();
             m_listResult.InsertItem(dwCount, _T(""));
             m_listResult.SetItemText(dwCount, 0, vecMarkCodeLine[0]);
@@ -467,13 +467,37 @@ void CSearchFeaturesDlg::OnBnClickedBtnCreatecode()
 
 void CSearchFeaturesDlg::CreateCode(int nCode)
 {
+    FILE *pFile = nullptr;
+    fopen_s(&pFile, "./代码.txt", "wb+");
+    if (pFile == nullptr)
+    {
+        MessageBox(_T("打开文件失败"), _T("错误"));
+        return;
+    }
+    
     switch (nCode)
     {
-    case 0:
+    case 0://生成C++代码
+    {
+        CString strCode = _T("");
+
+        for (int i = 0; i < m_listResult.GetItemCount();i++)
+        {
+            CString strLine;
+            strLine.Format(_T("#define %s \t%s \t//%s\r\n"), m_listResult.GetItemText(i, 0), m_listResult.GetItemText(i, 1), m_listResult.GetItemText(i, 2));
+            strCode += strLine;
+            
+        }
+        std::string strTmp = CStringA(strCode);
+        fprintf(pFile, strTmp.c_str());
         break;
-    case 1:
+    }
+    case 1://生成易语言代码
         break;
     default:
         break;
     }
+    fclose(pFile);
 }
+
+
