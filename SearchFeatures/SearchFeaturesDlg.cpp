@@ -335,7 +335,7 @@ void CSearchFeaturesDlg::OnBnClickedBtnTest()
     DWORD dwEndAddr = std::stoi(m_dwEndAddr.GetBuffer(), nullptr, 16);
 
     std::string strMarkCode = CStringA(m_strMarkCode);
-    DWORD dwCount = fc.FindMatchingCode(m_hProcess, strMarkCode, dwBeginAddr, dwEndAddr, dwRetAddr, m_nOffset, m_btnType==1, false);
+    DWORD dwCount = fc.FindMatchingCode(m_hProcess, strMarkCode, dwBeginAddr, dwEndAddr, dwRetAddr, m_nOffset, m_btnType==1, true);
 
     if (dwCount == 0)
     {
