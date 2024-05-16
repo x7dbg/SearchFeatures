@@ -16,7 +16,7 @@ public:
     /*
     FindMatchingCode() 参数说明：
     1) hProcess		要打开的进程句柄
-    2) markCode		特征码,支持通配符（**），如: 55 8b ec ** 56 83 ec 20 ** ** 08 d9 ee
+    2) markCode		特征码,支持通配符（??），如: 56 8B 01 FF 90 ?? ?? ?? ?? 85 C0 74
     3) memBeginAddr		起始搜索地址
     4) memEndAddr		结束搜索地址
     5) retAddr[]		记录找到的地址,传入这个参数前一定要清0，如 DWORD retAddr[32] = {0};  或者 DWORD *retAddr = new DWORD[32]();
@@ -26,6 +26,6 @@ public:
     return返回值		找到的地址总数
     搜不到内存可能是保护属性没有选对
     */
-    DWORD FindMatchingCode(HANDLE hProcess, std::string markCode, DWORD memBeginAddr, DWORD memEndAddr, DWORD retAddr[], int deviation, bool isCall, bool isAll = false);
+    DWORD FindMatchingCode(HANDLE hProcess, std::string strMarkCode, DWORD dwMemBeginAddr, DWORD dwMemEndAddr, DWORD dwRetAddr[], int nDeviation, bool bIsCall, bool bIsAll = false);
 };
 
