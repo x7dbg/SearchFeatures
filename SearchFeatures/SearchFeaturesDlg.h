@@ -107,4 +107,6 @@ private:
 
     // 表明要生成什么语言的代码
     CComboBox m_comboBoxLanguage;
+public:
+    afx_msg void OnBnClickedBtnSave();
 };

@@ -90,6 +90,7 @@ BEGIN_MESSAGE_MAP(CSearchFeaturesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BTN_SEARCH, &CSearchFeaturesDlg::OnBnClickedBtnSearch)
     ON_BN_CLICKED(IDC_BTN_TEST, &CSearchFeaturesDlg::OnBnClickedBtnTest)
     ON_BN_CLICKED(IDC_BTN_ADDLIST, &CSearchFeaturesDlg::OnBnClickedBtnAddlist)
+    ON_BN_CLICKED(IDC_BTN_SAVE, &CSearchFeaturesDlg::OnBnClickedBtnSave)
 END_MESSAGE_MAP()
 
 
@@ -354,4 +355,28 @@ void CSearchFeaturesDlg::OnBnClickedBtnAddlist()
     m_strMarkCodeList += strTmp;
     
     UpdateData(FALSE);
+}
+
+
+void CSearchFeaturesDlg::OnBnClickedBtnSave()
+{
+    UpdateData();
+
+    CString fileName = L"test.bp";			//默认打开的文件名
+    CString filter = L"特征码文件 (*.bp)|*.bp||";	//文件过虑的类型
+    CFileDialog openFileDlg(FALSE, NULL, fileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, filter, NULL);
+    //openFileDlg.GetOFN().lpstrInitialDir = L"E:\\FileTest\\test.doc";
+    if (openFileDlg.DoModal() == IDOK)
+    {
+        std::string strPath = CStringA(openFileDlg.GetPathName());
+        FILE *pFile = nullptr;
+        fopen_s(&pFile, strPath.c_str(), "wb+");
+        if (pFile == nullptr)
+        {
+            MessageBox(_T("打开文件失败"));
+        }
+        std::string strTmp = CStringA(m_strMarkCodeList);
+        fprintf(pFile, strTmp.c_str());
+        fclose(pFile);
+    }
 }
