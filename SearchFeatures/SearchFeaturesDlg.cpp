@@ -284,16 +284,21 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
         MessageBox(_T("特征码列表为空！！！"), _T("错误"));
         return;
     }
+    //搜索前先清空list避免重复显示
     m_listResult.DeleteAllItems();
+
+    //分割出每一行的特征码
     std::vector<CString> vecMarkCodeList = SplitString(m_strMarkCodeList,_T('\n'));
     CFeatureCode fc;
 
+    
     for each (auto var in vecMarkCodeList)
     {
         if (var.IsEmpty())
         {
             continue;
         }
+        //遍历每一行特征码名字 注释 特征码 偏移 读取长度 读取方式(基址 偏移 CALL)
         std::vector<CString> vecMarkCodeLine = SplitString(var,_T(','));
         DWORD dwRetAddr[32] = { 0 };
         std::string strMarkCode = CStringA(vecMarkCodeLine[2]);
@@ -312,9 +317,9 @@ void CSearchFeaturesDlg::OnBnClickedBtnSearch()
             strResult.Format(_T("0x%08X"), dwValue);
             DWORD dwCount = m_listResult.GetItemCount();
             m_listResult.InsertItem(dwCount, _T(""));
-            m_listResult.SetItemText(dwCount, 0, vecMarkCodeLine[0]);
-            m_listResult.SetItemText(dwCount, 1, strResult);
-            m_listResult.SetItemText(dwCount, 2, vecMarkCodeLine[1]);
+            m_listResult.SetItemText(dwCount, 0, vecMarkCodeLine[0]);//设置名字
+            m_listResult.SetItemText(dwCount, 1, strResult);//设置读取结果
+            m_listResult.SetItemText(dwCount, 2, vecMarkCodeLine[1]);//设置注释
         }
     }
 }
@@ -467,6 +472,12 @@ void CSearchFeaturesDlg::OnBnClickedBtnCreatecode()
 
 void CSearchFeaturesDlg::CreateCode(int nCode)
 {
+    if (m_listResult.GetItemCount() == 0)
+    {
+        MessageBox(_T("请先搜索出结果再生成代码"),_T("警告"));
+
+        return;
+    }
     FILE *pFile = nullptr;
     fopen_s(&pFile, "./代码.txt", "wb+");
     if (pFile == nullptr)
@@ -498,4 +509,5 @@ void CSearchFeaturesDlg::CreateCode(int nCode)
         break;
     }
     fclose(pFile);
+    ShellExecute(NULL, L"open", L"notepad", _T("./代码.txt"), NULL, SW_SHOWNORMAL);
 }
