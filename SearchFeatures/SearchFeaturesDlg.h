@@ -74,20 +74,13 @@ private:
     */
     DWORD Search(std::string strMarkCode, DWORD dwRetAddrArr[]);
 
-    std::vector<CString> SplitString(const CString& str, TCHAR delimiter) {
-        std::vector<CString> tokens;
-        int start = 0;
-        for (int i = 0; i < str.GetLength(); i++) {
-            if (str[i] == delimiter) {
-                CString token = str.Mid(start, i - start);
-                tokens.push_back(token);
-                start = i + 1;
-            }
-        }
-        CString token = str.Mid(start);
-        tokens.push_back(token);
-        return tokens;
-    }
+    /*
+    SplitString 字符串分割函数
+    第一个参数 要分割的字符串
+    第二个参数 以什么字符串作为分割依据 
+    返回值：分割出来的字符串数组
+    */
+    std::vector<CString> SplitString(const CString& str, TCHAR delimiter);
 private:
     // 用于显示进程列表的ComboBox控件
     CComboBox m_comboProcessList;

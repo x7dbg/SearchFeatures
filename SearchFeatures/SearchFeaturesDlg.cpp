@@ -427,3 +427,21 @@ void CSearchFeaturesDlg::OnBnClickedBtnLoad()
         UpdateData(FALSE);
     }
 }
+
+std::vector<CString> CSearchFeaturesDlg::SplitString(const CString& str, TCHAR delimiter)
+{
+    std::vector<CString> tokens;
+    int start = 0;
+    for (int i = 0; i < str.GetLength(); i++)
+    {
+        if (str[i] == delimiter)
+        {
+            CString token = str.Mid(start, i - start);
+            tokens.push_back(token);
+            start = i + 1;
+        }
+    }
+    CString token = str.Mid(start);
+    tokens.push_back(token);
+    return tokens;
+}
