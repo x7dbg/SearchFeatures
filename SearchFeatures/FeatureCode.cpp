@@ -150,7 +150,8 @@ DWORD CFeatureCode::FindMatchingCode(HANDLE hProcess, string markCode, DWORD mem
                 {
                     nOffset = i - j + nSundayLen;
                     //判断偏移量是否大于缓冲区
-                    if (nOffset > mbi.RegionSize - len) break;
+                    if (nOffset > mbi.RegionSize - len)
+                        break;
                     //判断 aSunday模板数组 里有没有 内存偏移后的值，有则回溯，否则+1
                     if (aSunday[pMemBuffer[nOffset]])
                     {

@@ -478,10 +478,10 @@ void CSearchFeaturesDlg::OnBnClickedBtnCreatecode()
     switch (m_comboBoxLanguage.GetCurSel())
     {
     case 0://生成C++代码
-    {
         CreateCppCode();
-    }
+        break;
     case 1://生成易语言代码
+        CreateECode();
         break;
     default:
         break;
@@ -524,6 +524,33 @@ void CSearchFeaturesDlg::CreateCppCode()
         strCode += strLine;
 
     }
+    std::string strTmp = CStringA(strCode);
+    fprintf(pFile, strTmp.c_str());
+
+    fclose(pFile);
+}
+
+void CSearchFeaturesDlg::CreateECode()
+{
+    //易语言常量格式 .版本 2\n    .常量 常量名, "“常量值”", 公开, 注释
+
+    FILE *pFile = nullptr;
+    fopen_s(&pFile, CODEPATH, "wb+");
+    if (pFile == nullptr)
+    {
+        MessageBox(_T("打开文件失败"), _T("错误"));
+        return;
+    }
+    CString strCode = _T("");
+    fprintf(pFile, ".版本 2\n");
+    for (int i = 0; i < m_listResult.GetItemCount(); i++)
+    {
+        CString strLine;
+        strLine.Format(_T(".常量 %s, \"“%s”\", 公开, %s\n"),
+            m_listResult.GetItemText(i, 0), m_listResult.GetItemText(i, 1), m_listResult.GetItemText(i, 2));
+        strCode += strLine;
+    }
+    
     std::string strTmp = CStringA(strCode);
     fprintf(pFile, strTmp.c_str());
 
